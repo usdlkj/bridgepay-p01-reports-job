@@ -8,15 +8,8 @@ import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [
-    BrokerModule, 
-    LoggerModule,
-  ],
-  providers: [
-    BaseReportService, 
-    OrderReportService,
-    FinanceReportService,
-  ],
+  imports: [BrokerModule, LoggerModule],
+  providers: [BaseReportService, OrderReportService, FinanceReportService],
   controllers: [ReportController],
 })
 export class ReportModule {}

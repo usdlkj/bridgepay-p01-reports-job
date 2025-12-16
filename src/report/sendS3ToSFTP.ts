@@ -8,9 +8,9 @@ import { ConfigService } from '@nestjs/config';
 export async function sendS3ToSFTP(
   configService: ConfigService,
   params: {
-  s3Key: string;
-  sftpDestPath: string;
-  fallbackLocalPath: string; // e.g. './reports/MW_20250714.txt'
+    s3Key: string;
+    sftpDestPath: string;
+    fallbackLocalPath: string; // e.g. './reports/MW_20250714.txt'
   },
 ): Promise<void> {
   const env = configService.get<string>('nodeEnv');

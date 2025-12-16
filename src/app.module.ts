@@ -11,21 +11,17 @@ import awsConfig from './config/aws.config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ 
+    ConfigModule.forRoot({
       isGlobal: true,
-      load: [
-        appConfig,
-        awsConfig,
-        rabbitmqConfig,
-      ],
+      load: [appConfig, awsConfig, rabbitmqConfig],
     }),
     LoggerModule.forRoot({
       pinoHttp: {
         level: 'info',
         transport: {
           target: 'pino-pretty',
-        }
-      }
+        },
+      },
     }),
     ReportModule,
     BrokerModule,

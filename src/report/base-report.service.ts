@@ -39,7 +39,10 @@ export class BaseReportService {
   /**
    * Shared util for fetching existing report or creating a new one.
    */
-  protected async getOrCreateReport(reportType: string, reportDate: string): Promise<ReportEntity> {
+  protected async getOrCreateReport(
+    reportType: string,
+    reportDate: string,
+  ): Promise<ReportEntity> {
     const existing = await firstValueFrom(
       this.coreService.send(
         { cmd: 'get-report-data' },
@@ -64,7 +67,10 @@ export class BaseReportService {
   /**
    * Shared util for fetching orders within a date range.
    */
-  protected async fetchOrders(start: moment.Moment, end: moment.Moment): Promise<any[]> {
+  protected async fetchOrders(
+    start: moment.Moment,
+    end: moment.Moment,
+  ): Promise<any[]> {
     const orders = await firstValueFrom(
       this.coreService.send(
         { cmd: 'get-order-report' },
@@ -86,7 +92,9 @@ export class BaseReportService {
     try {
       return JSON.parse(value) as T;
     } catch (err) {
-      this.logger.warn(`Failed to parse JSON, returning fallback. Raw length=${value.length}`);
+      this.logger.warn(
+        `Failed to parse JSON, returning fallback. Raw length=${value.length}`,
+      );
       return fallback;
     }
   }
@@ -112,7 +120,11 @@ export class BaseReportService {
   /**
    * Shared file writer (local for dev/test, S3 for prod).
    */
-  protected async writeReportFile(args: { filePath: string; fileName: string; content: string }) {
+  protected async writeReportFile(args: {
+    filePath: string;
+    fileName: string;
+    content: string;
+  }) {
     const { filePath, fileName, content } = args;
 
     const shouldWriteLocal = this.env === 'development' || this.env === 'test';
@@ -135,9 +147,10 @@ export class BaseReportService {
     feeCalculation: any,
     extraFee: number,
   ): OrderReportAmount {
-    const feeDetail = typeof feeCalculation === 'string'
-      ? JSON.parse(feeCalculation)
-      : feeCalculation || {};
+    const feeDetail =
+      typeof feeCalculation === 'string'
+        ? JSON.parse(feeCalculation)
+        : feeCalculation || {};
 
     const percentFee =
       feeDetail.percentage && feeDetail.percentage !== 0
@@ -148,12 +161,12 @@ export class BaseReportService {
 
     const totalFee = percentFee + fixedFee;
 
-    const type = feeDetail.type ? String(feeDetail.type).toLowerCase() : 'inclusive';
+    const type = feeDetail.type
+      ? String(feeDetail.type).toLowerCase()
+      : 'inclusive';
 
     const grossAmount =
-      type === 'inclusive'
-        ? amount + extraFee
-        : amount + extraFee + totalFee;
+      type === 'inclusive' ? amount + extraFee : amount + extraFee + totalFee;
 
     const isXendit = (pgName || '').toLowerCase() === 'xendit';
     const PPN_VALUE = parseInt(process.env.PPN_VALUE || '11', 10);

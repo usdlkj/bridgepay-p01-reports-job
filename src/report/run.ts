@@ -16,7 +16,10 @@ async function bootstrap() {
   const financeReportService = app.get(FinanceReportService);
 
   // At 02:00 WIB, we generate reports for the previous calendar day
-  const targetDate = moment().tz('Asia/Jakarta').subtract(1, 'day').format('YYYY-MM-DD');
+  const targetDate = moment()
+    .tz('Asia/Jakarta')
+    .subtract(1, 'day')
+    .format('YYYY-MM-DD');
   logger.log(`Running daily report for ${targetDate} (previous day)...`);
 
   logger.log('Step 1: Generating Order Report...');

@@ -48,7 +48,7 @@ interface OrderReportAmount {
   ppn?: number;
 }
 import { Injectable, Inject } from '@nestjs/common';
-import { Logger } from 'nestjs-pino';
+import { InjectPinoLogger, Logger } from 'nestjs-pino';
 import { ClientProxy } from '@nestjs/microservices';
 import { sendS3ToSFTP } from './sendS3ToSFTP';
 import { ConfigService } from '@nestjs/config';
@@ -66,18 +66,22 @@ export class OrderReportService extends BaseReportService {
   constructor(
     @Inject('ProcessorToCoreClient') coreService: ClientProxy,
     configService: ConfigService,
+    @InjectPinoLogger()
     logger: Logger,
   ) {
     super(coreService, configService, logger);
   }
-  
+
   async generate(params: { reportDate: string }) {
     try {
       const start = moment.tz(params.reportDate, TIMEZONE_WIB).startOf('day');
       const end = moment.tz(params.reportDate, TIMEZONE_WIB).endOf('day');
 
-      const report = await super.getOrCreateReport('Order Report', params.reportDate);
-      
+      const report = await super.getOrCreateReport(
+        'Order Report',
+        params.reportDate,
+      );
+
       const taskPayload = {
         startDate: start,
         endDate: end,
@@ -88,7 +92,9 @@ export class OrderReportService extends BaseReportService {
 
       await this.generateOrderReport(taskPayload);
     } catch (error: any) {
-      super.logger.error(`Failed to generate order report: ${error.message}`, { err: error });
+      super.logger.error(`Failed to generate order report: ${error.message}`, {
+        err: error,
+      });
     }
   }
 
@@ -111,7 +117,9 @@ export class OrderReportService extends BaseReportService {
         orderCount++;
 
         const invoiceData = super.safeParseJson(order.invoiceData, {});
-        const pgResponse = (order.pgResponse || [])[0] as PgResponseRecord | undefined;
+        const pgResponse = (order.pgResponse || [])[0] as
+          | PgResponseRecord
+          | undefined;
         if (!pgResponse) {
           super.logger.warn(`Missing pgResponse for order ${order.id}`);
           continue;
@@ -173,11 +181,17 @@ export class OrderReportService extends BaseReportService {
 
       await super.updateReportStatus(params.reportId, rows);
     } catch (error: any) {
-      super.logger.error(`Failed to generate order report: ${error.message}`, { err: error });
+      super.logger.error(`Failed to generate order report: ${error.message}`, {
+        err: error,
+      });
     }
   }
 
-  private extractPgId(pgNameRaw: string, pgResponse: PgResponseRecord, responseData: any): string {
+  private extractPgId(
+    pgNameRaw: string,
+    pgResponse: PgResponseRecord,
+    responseData: any,
+  ): string {
     const pgName = (pgNameRaw || '').toLowerCase();
 
     if (pgName === 'xendit') {
@@ -204,7 +218,8 @@ export class OrderReportService extends BaseReportService {
           return responseData?.transaction?.original_request_id || '';
         }
         if (acquirerId === 'BNI') {
-          const identifier = responseData?.virtual_account_payment?.identifier || [];
+          const identifier =
+            responseData?.virtual_account_payment?.identifier || [];
           const trx = identifier.find((item: any) => item?.name === 'TRX_ID');
           return trx?.value || '';
         }
@@ -226,7 +241,8 @@ export class OrderReportService extends BaseReportService {
   }): string {
     const { order, invoiceData, responseData, pgName, pgId, dataAmount } = args;
 
-    const txnTimestamp = responseData?.transaction_timestamp || responseData?.created;
+    const txnTimestamp =
+      responseData?.transaction_timestamp || responseData?.created;
     const formattedTxnTime = txnTimestamp
       ? moment.utc(txnTimestamp).tz(TIMEZONE_WIB).format('YYYYMMDDHHmmss')
       : '';
@@ -269,7 +285,13 @@ export class OrderReportService extends BaseReportService {
     settlementTotal: number;
     agencyFeeTotal: number;
   }): string {
-    const { orderCount, transactionTotal, serviceFeeTotal, settlementTotal, agencyFeeTotal } = args;
+    const {
+      orderCount,
+      transactionTotal,
+      serviceFeeTotal,
+      settlementTotal,
+      agencyFeeTotal,
+    } = args;
 
     const summaryArr = [
       orderCount,

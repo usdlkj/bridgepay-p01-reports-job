@@ -16,10 +16,13 @@ export class FinanceReportService extends BaseReportService {
   ) {
     super(coreService, configService, logger);
   }
-  
+
   async generate(params: { reportDate: string }) {
     try {
-      const report = await super.getOrCreateReport('Finance Report', params.reportDate);
+      const report = await super.getOrCreateReport(
+        'Finance Report',
+        params.reportDate,
+      );
 
       const start = moment.tz(params.reportDate, TIMEZONE_WIB).startOf('day');
       const end = moment.tz(params.reportDate, TIMEZONE_WIB).endOf('day');
@@ -32,7 +35,6 @@ export class FinanceReportService extends BaseReportService {
       };
 
       await this.generateFinanceReport(taskPayload);
-
     } catch (error) {
       super.logger.error(`Failed to generate finance report: ${error.message}`);
     }
@@ -44,7 +46,7 @@ export class FinanceReportService extends BaseReportService {
       const end = moment(params.endDate).tz('Asia/Jakarta');
 
       const orders = await super.fetchOrders(start, end);
-      
+
       const data: string[] = [];
 
       const totals = {
