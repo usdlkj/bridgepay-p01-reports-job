@@ -19,10 +19,17 @@ export class FinanceReportService extends BaseReportService {
 
   async generate(params: { reportDate: string }) {
     try {
-      const report = await super.getOrCreateReport(
+      const { report, existed } = await super.getOrCreateReport(
         'Finance Report',
         params.reportDate,
       );
+
+      if (existed && report.status === 'Completed') {
+        super.logger.log(
+          `Finance report for ${params.reportDate} is already completed; skipping regeneration.`,
+        );
+        return;
+      }
 
       const start = moment.tz(params.reportDate, TIMEZONE_WIB).startOf('day');
       const end = moment.tz(params.reportDate, TIMEZONE_WIB).endOf('day');

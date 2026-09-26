@@ -77,10 +77,17 @@ export class OrderReportService extends BaseReportService {
       const start = moment.tz(params.reportDate, TIMEZONE_WIB).startOf('day');
       const end = moment.tz(params.reportDate, TIMEZONE_WIB).endOf('day');
 
-      const report = await super.getOrCreateReport(
+      const { report, existed } = await super.getOrCreateReport(
         'Order Report',
         params.reportDate,
       );
+
+      if (existed && report.status === 'Completed') {
+        super.logger.log(
+          `Order report for ${params.reportDate} is already completed; skipping regeneration.`,
+        );
+        return;
+      }
 
       const taskPayload = {
         startDate: start,

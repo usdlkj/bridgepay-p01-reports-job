@@ -17,6 +17,11 @@ export interface ReportEntity {
   status?: string;
 }
 
+export interface ReportLookup {
+  report: ReportEntity;
+  existed: boolean;
+}
+
 export interface OrderReportAmount {
   grossAmount: number;
   serviceFee: number;
@@ -42,7 +47,7 @@ export class BaseReportService {
   protected async getOrCreateReport(
     reportType: string,
     reportDate: string,
-  ): Promise<ReportEntity> {
+  ): Promise<ReportLookup> {
     const existing = await firstValueFrom(
       this.coreService.send(
         { cmd: 'get-report-data' },
@@ -51,7 +56,7 @@ export class BaseReportService {
     );
 
     if (existing) {
-      return existing as ReportEntity;
+      return { report: existing as ReportEntity, existed: true };
     }
 
     const created = await firstValueFrom(
@@ -61,7 +66,7 @@ export class BaseReportService {
       ),
     );
 
-    return created as ReportEntity;
+    return { report: created as ReportEntity, existed: false };
   }
 
   /**
