@@ -15,12 +15,19 @@ async function bootstrap() {
   const orderReportService = app.get(OrderReportService);
   const financeReportService = app.get(FinanceReportService);
 
-  // At 02:00 WIB, we generate reports for the previous calendar day
-  const targetDate = moment()
-    .tz('Asia/Jakarta')
-    .subtract(1, 'day')
-    .format('YYYY-MM-DD');
-  logger.log(`Running daily report for ${targetDate} (previous day)...`);
+  // At 02:00 WIB, generate the previous calendar day unless a recovery run
+  // explicitly supplies REPORT_DATE (YYYY-MM-DD).
+  const configuredReportDate = process.env.REPORT_DATE;
+  if (
+    configuredReportDate &&
+    !moment(configuredReportDate, 'YYYY-MM-DD', true).isValid()
+  ) {
+    throw new Error('REPORT_DATE must use YYYY-MM-DD format');
+  }
+  const targetDate =
+    configuredReportDate ??
+    moment().tz('Asia/Jakarta').subtract(1, 'day').format('YYYY-MM-DD');
+  logger.log(`Running daily report for ${targetDate}...`);
 
   logger.log('Step 1: Generating Order Report...');
   await orderReportService.generate({ reportDate: targetDate });

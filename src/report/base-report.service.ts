@@ -1,3 +1,4 @@
+import { uploadReportToS3 } from './s3-upload';
 import { Inject, Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
 import * as moment from 'moment-timezone';
@@ -6,7 +7,6 @@ import { Logger } from 'nestjs-pino';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { ClientProxy } from '@nestjs/microservices';
-// import { uploadToS3 } from '../utils/s3-upload';
 
 const TIMEZONE_WIB = 'Asia/Jakarta';
 
@@ -15,6 +15,11 @@ export interface ReportEntity {
   reportType: string;
   reportDate: string;
   status?: string;
+}
+
+export interface ReportLookup {
+  report: ReportEntity;
+  existed: boolean;
 }
 
 export interface OrderReportAmount {
@@ -34,7 +39,17 @@ export class BaseReportService {
     protected readonly coreService: ClientProxy,
     protected readonly configService: ConfigService,
     protected readonly logger: Logger,
-  ) {}
+  ) {
+    this.env = this.configService.get<string>('nodeEnv', 'development');
+  }
+
+  /** REPORT_FORCE=yes regenerates reports Core already marks Completed (backfill). */
+  protected forceRegeneration(): boolean {
+    return (
+      this.configService.get<string>('reportForce', 'no').toLowerCase() ===
+      'yes'
+    );
+  }
 
   /**
    * Shared util for fetching existing report or creating a new one.
@@ -42,7 +57,7 @@ export class BaseReportService {
   protected async getOrCreateReport(
     reportType: string,
     reportDate: string,
-  ): Promise<ReportEntity> {
+  ): Promise<ReportLookup> {
     const existing = await firstValueFrom(
       this.coreService.send(
         { cmd: 'get-report-data' },
@@ -51,7 +66,7 @@ export class BaseReportService {
     );
 
     if (existing) {
-      return existing as ReportEntity;
+      return { report: existing as ReportEntity, existed: true };
     }
 
     const created = await firstValueFrom(
@@ -61,7 +76,7 @@ export class BaseReportService {
       ),
     );
 
-    return created as ReportEntity;
+    return { report: created as ReportEntity, existed: false };
   }
 
   /**
@@ -135,7 +150,8 @@ export class BaseReportService {
       return;
     }
 
-    // await uploadToS3(`reports/${fileName}`, content, 'text/plain');
+    // A failed upload throws, so the report is not marked Completed and the job fails.
+    await uploadReportToS3(this.configService, `reports/${fileName}`, content);
   }
 
   /**
