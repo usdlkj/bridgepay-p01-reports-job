@@ -7,6 +7,8 @@ export default () => ({
   ftpPassword: process.env.FTP_PASSWORD || 'password',
   ftpPath: process.env.FTP_PATH || '/reports',
   sendFtp: process.env.SEND_FTP || 'no',
+  // yes = regenerate reports already marked Completed (backfill after the T13/T14 fix)
+  reportForce: process.env.REPORT_FORCE || 'no',
   reportPath: process.env.REPORT_PATH || './reports',
   ppnValue: process.env.PPN_VALUE || '11',
 });

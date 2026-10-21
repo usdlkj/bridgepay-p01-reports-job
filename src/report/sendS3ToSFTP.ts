@@ -50,12 +50,9 @@ export async function sendS3ToSFTP(
     return;
   }
 
+  // Credentials come from the default chain (IRSA in the cluster).
   const s3Client = new S3Client({
     region: configService.get<string>('aws.region'),
-    credentials: {
-      accessKeyId: configService.get<string>('aws.accessKey') || '',
-      secretAccessKey: configService.get<string>('aws.secretKey') || '',
-    },
   });
 
   // Normal S3 streaming upload in staging/production

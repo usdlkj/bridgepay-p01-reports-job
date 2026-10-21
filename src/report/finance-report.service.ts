@@ -24,7 +24,11 @@ export class FinanceReportService extends BaseReportService {
         params.reportDate,
       );
 
-      if (existed && report.status === 'Completed') {
+      if (
+        existed &&
+        report.status === 'Completed' &&
+        !this.forceRegeneration()
+      ) {
         super.logger.log(
           `Finance report for ${params.reportDate} is already completed; skipping regeneration.`,
         );
@@ -44,6 +48,7 @@ export class FinanceReportService extends BaseReportService {
       await this.generateFinanceReport(taskPayload);
     } catch (error) {
       super.logger.error(`Failed to generate finance report: ${error.message}`);
+      throw error; // fail the job; swallowing it let a failed run exit 0
     }
   }
 
@@ -110,6 +115,7 @@ export class FinanceReportService extends BaseReportService {
       await super.updateReportStatus(params.reportId, data);
     } catch (error) {
       super.logger.error(`Failed to generate finance report: ${error.message}`);
+      throw error; // fail the job; swallowing it let a failed run exit 0
     }
   }
 }

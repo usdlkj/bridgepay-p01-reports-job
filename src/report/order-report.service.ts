@@ -82,7 +82,11 @@ export class OrderReportService extends BaseReportService {
         params.reportDate,
       );
 
-      if (existed && report.status === 'Completed') {
+      if (
+        existed &&
+        report.status === 'Completed' &&
+        !this.forceRegeneration()
+      ) {
         super.logger.log(
           `Order report for ${params.reportDate} is already completed; skipping regeneration.`,
         );
@@ -102,6 +106,7 @@ export class OrderReportService extends BaseReportService {
       super.logger.error(`Failed to generate order report: ${error.message}`, {
         err: error,
       });
+      throw error; // fail the job; swallowing it let a failed run exit 0
     }
   }
 
