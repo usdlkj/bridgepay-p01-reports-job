@@ -48,7 +48,7 @@ interface OrderReportAmount {
   ppn?: number;
 }
 import { Injectable, Inject } from '@nestjs/common';
-import { InjectPinoLogger, Logger } from 'nestjs-pino';
+import { Logger } from 'nestjs-pino';
 import { ClientProxy } from '@nestjs/microservices';
 import { sendS3ToSFTP } from './sendS3ToSFTP';
 import { ConfigService } from '@nestjs/config';
@@ -66,7 +66,6 @@ export class OrderReportService extends BaseReportService {
   constructor(
     @Inject('ProcessorToCoreClient') coreService: ClientProxy,
     configService: ConfigService,
-    @InjectPinoLogger()
     logger: Logger,
   ) {
     super(coreService, configService, logger);
@@ -87,7 +86,7 @@ export class OrderReportService extends BaseReportService {
         report.status === 'Completed' &&
         !this.forceRegeneration()
       ) {
-        super.logger.log(
+        this.logger.log(
           `Order report for ${params.reportDate} is already completed; skipping regeneration.`,
         );
         return;
@@ -103,7 +102,7 @@ export class OrderReportService extends BaseReportService {
 
       await this.generateOrderReport(taskPayload);
     } catch (error: any) {
-      super.logger.error(`Failed to generate order report: ${error.message}`, {
+      this.logger.error(`Failed to generate order report: ${error.message}`, {
         err: error,
       });
       throw error; // fail the job; swallowing it let a failed run exit 0
@@ -133,7 +132,7 @@ export class OrderReportService extends BaseReportService {
           | PgResponseRecord
           | undefined;
         if (!pgResponse) {
-          super.logger.warn(`Missing pgResponse for order ${order.id}`);
+          this.logger.warn(`Missing pgResponse for order ${order.id}`);
           continue;
         }
 
@@ -193,7 +192,7 @@ export class OrderReportService extends BaseReportService {
 
       await super.updateReportStatus(params.reportId, rows);
     } catch (error: any) {
-      super.logger.error(`Failed to generate order report: ${error.message}`, {
+      this.logger.error(`Failed to generate order report: ${error.message}`, {
         err: error,
       });
     }
