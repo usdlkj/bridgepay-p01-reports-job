@@ -48,7 +48,7 @@ interface OrderReportAmount {
   ppn?: number;
 }
 import { Injectable, Inject } from '@nestjs/common';
-import { InjectPinoLogger, Logger } from 'nestjs-pino';
+import { Logger } from 'nestjs-pino';
 import { ClientProxy } from '@nestjs/microservices';
 import { sendS3ToSFTP } from './sendS3ToSFTP';
 import { ConfigService } from '@nestjs/config';
@@ -66,7 +66,6 @@ export class OrderReportService extends BaseReportService {
   constructor(
     @Inject('ProcessorToCoreClient') coreService: ClientProxy,
     configService: ConfigService,
-    @InjectPinoLogger()
     logger: Logger,
   ) {
     super(coreService, configService, logger);
